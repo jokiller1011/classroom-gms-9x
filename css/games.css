@@ -1,0 +1,11 @@
+body {
+  text-align: center;
+  background: #181818;
+  color: white;
+}
+
+.games a {
+  display: block;
+  margin: 12px;
+  font-size: 18px;
+}
