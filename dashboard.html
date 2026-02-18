@@ -3,12 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>Games | ClassRoom Gms 9x</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <link rel="stylesheet" href="css/classroom.css">
-  <script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js");
-}
-</script>
 </head>
 <body>
 
@@ -16,27 +13,35 @@ if ("serviceWorker" in navigator) {
   <h1>ClassRoom Gms 9x</h1>
   <button id="logout">Logout</button>
   <div style="display:flex; gap:12px; align-items:center;">
-  <span>🔔</span>
-  <span>📅</span>
-  <span>⚙️</span>
-</div>
+    <span>🔔</span>
+    <span>📅</span>
+    <span>⚙️</span>
+  </div>
 </header>
-  <button id="installBtn" onclick="installPWA()" style="display:none;">
+
+<!-- INSTALL BUTTON -->
+<button id="installBtn" class="install-btn" style="display:none">
   Install App
 </button>
-<script src="js/pwa.js"></script>
 
 <main>
   <div class="card">
     <h2>Games</h2>
 
-    <!-- REAL LINKS -->
     <a class="game-link" href="games/dino/index.html">🦖 Dino Run</a>
     <a class="game-link" href="games/brick/index.html">🧱 Brick Breaker</a>
     <a class="game-link" href="games/flappy/index.html">🐦 Flappy Bird</a>
   </div>
 </main>
 
+<script src="js/pwa.js"></script>
 <script type="module" src="js/dashboard.js"></script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js");
+}
+</script>
+
 </body>
 </html>
