@@ -3,20 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <title>Games | ClassRoom Gms 9x</title>
-  <link rel="stylesheet" href="css/games.css">
+  <link rel="stylesheet" href="css/classroom.css">
 </head>
 <body>
 
-<h1>Game Library</h1>
-<button id="logout">Logout</button>
+<header>
+  <h1>ClassRoom Gms 9x</h1>
+  <button id="logout">Logout</button>
+</header>
 
-<div class="games">
-  <a href="#">Dino Run</a>
-  <a href="#">Brick Breaker</a>
-  <a href="#">Flappy</a>
-</div>
+<main>
+  <div class="card">
+    <h2>Games</h2>
+
+    <!-- REAL LINKS -->
+    <a class="game-link" href="games/dino/index.html">🦖 Dino Run</a>
+    <a class="game-link" href="games/brick/index.html">🧱 Brick Breaker</a>
+    <a class="game-link" href="games/flappy/index.html">🐦 Flappy Bird</a>
+  </div>
+</main>
 
 <script type="module" src="js/dashboard.js"></script>
-<script src="js/offline.js"></script>
 </body>
 </html>
