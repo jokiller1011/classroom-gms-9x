@@ -1,14 +1,19 @@
 {
   "name": "ClassRoom Gms 9x",
-  "short_name": "CR Gms 9x",
+  "short_name": "CRG9X",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1a73e8",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ]
