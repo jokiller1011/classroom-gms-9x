@@ -1,83 +1,95 @@
-// login lock
-if (!localStorage.getItem("crg9x_current_user")) {
-  location.href = "../../login.html";
-}
-
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-canvas.width = 600;
-canvas.height = 200;
-
-let dino = { x: 50, y: 140, w: 24, h: 24, vy: 0 };
-let obstacles = [];
-let score = 0;
-let gameOver = false;
-
-document.addEventListener("keydown", e => {
-  if (e.code === "Space" && dino.y >= 140) {
-    dino.vy = -12;
-  }
-  if (gameOver && e.code === "Enter") location.reload();
-});
-
-function spawnObstacle() {
-  obstacles.push({
-    x: canvas.width,
-    y: 156,
-    w: 20,
-    h: 30
-  });
+// auth check (NO redirect)
+const user = localStorage.getItem("crg9x_current_user");
+if (!user) {
+  ctx.font = "20px Arial";
+  ctx.fillText("Please log in to play", 120, 160);
+  throw new Error("Not logged in");
 }
 
-setInterval(spawnObstacle, 1300);
+let ball = { x: 240, y: 160, dx: 3, dy: -3, r: 6 };
+let paddle = { x: 180, w: 120 };
+let bricks = [];
+
+function resetBall() {
+  ball.x = 240;
+  ball.y = 160;
+  ball.dx = 3;
+  ball.dy = -3;
+}
+
+for (let r = 0; r < 3; r++) {
+  for (let c = 0; c < 5; c++) {
+    bricks.push({
+      x: c * 90 + 30,
+      y: r * 30 + 30,
+      hit: false
+    });
+  }
+}
+
+document.addEventListener("mousemove", e => {
+  const rect = canvas.getBoundingClientRect();
+  paddle.x = e.clientX - rect.left - paddle.w / 2;
+});
 
 function loop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // ground
-  ctx.fillStyle = "#444";
-  ctx.fillRect(0, 180, canvas.width, 4);
+  // move ball
+  ball.x += ball.dx;
+  ball.y += ball.dy;
 
-  // dino physics
-  dino.vy += 0.6;
-  dino.y += dino.vy;
-  if (dino.y > 140) {
-    dino.y = 140;
-    dino.vy = 0;
+  // walls
+  if (ball.x - ball.r < 0 || ball.x + ball.r > canvas.width) {
+    ball.dx *= -1;
+  }
+  if (ball.y - ball.r < 0) {
+    ball.dy *= -1;
   }
 
-  // draw dino
+  // paddle
+  if (
+    ball.y + ball.r >= 300 &&
+    ball.x > paddle.x &&
+    ball.x < paddle.x + paddle.w
+  ) {
+    ball.dy *= -1;
+    ball.y = 300 - ball.r;
+  }
+
+  // bottom → reset ball (NO reload)
+  if (ball.y - ball.r > canvas.height) {
+    resetBall();
+  }
+
+  // draw paddle
   ctx.fillStyle = "#1a73e8";
-  ctx.fillRect(dino.x, dino.y, dino.w, dino.h);
+  ctx.fillRect(paddle.x, 300, paddle.w, 10);
 
-  // obstacles
+  // draw ball
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
   ctx.fillStyle = "#000";
-  obstacles.forEach(o => {
-    o.x -= 5;
-    ctx.fillRect(o.x, o.y, o.w, o.h);
+  ctx.fill();
 
-    // collision
-    if (
-      dino.x < o.x + o.w &&
-      dino.x + dino.w > o.x &&
-      dino.y < o.y + o.h &&
-      dino.y + dino.h > o.y
-    ) {
-      gameOver = true;
+  // bricks
+  bricks.forEach(b => {
+    if (!b.hit) {
+      ctx.fillRect(b.x, b.y, 70, 20);
+      if (
+        ball.x > b.x &&
+        ball.x < b.x + 70 &&
+        ball.y > b.y &&
+        ball.y < b.y + 20
+      ) {
+        b.hit = true;
+        ball.dy *= -1;
+      }
     }
   });
-
-  obstacles = obstacles.filter(o => o.x + o.w > 0);
-
-  // score
-  ctx.fillStyle = "#000";
-  ctx.fillText("Score: " + score++, 10, 20);
-
-  if (gameOver) {
-    ctx.fillText("GAME OVER — Press Enter", 220, 100);
-    return;
-  }
 
   requestAnimationFrame(loop);
 }
