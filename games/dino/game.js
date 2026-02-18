@@ -1,95 +1,134 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// auth check (NO redirect)
-const user = localStorage.getItem("crg9x_current_user");
-if (!user) {
-  ctx.font = "20px Arial";
-  ctx.fillText("Please log in to play", 120, 160);
+canvas.width = 600;
+canvas.height = 200;
+
+/* ---------------- FAILSAFE RELOAD LIMIT ---------------- */
+const MAX_RELOADS = 3;
+let reloadCount = Number(sessionStorage.getItem("dinoReloads")) || 0;
+
+/* ---------------- AUTH CHECK ---------------- */
+if (!localStorage.getItem("crg9x_current_user")) {
+  ctx.font = "18px Arial";
+  ctx.fillText("Please log in to play", 200, 100);
   throw new Error("Not logged in");
 }
 
-let ball = { x: 240, y: 160, dx: 3, dy: -3, r: 6 };
-let paddle = { x: 180, w: 120 };
-let bricks = [];
+/* ---------------- GAME STATE ---------------- */
+let dino = {
+  x: 50,
+  y: 140,
+  w: 24,
+  h: 24,
+  vy: 0
+};
 
-function resetBall() {
-  ball.x = 240;
-  ball.y = 160;
-  ball.dx = 3;
-  ball.dy = -3;
+let obstacles = [];
+let score = 0;
+let gameOver = false;
+
+/* ---------------- INPUT ---------------- */
+document.addEventListener("keydown", e => {
+  if (e.code === "Space" && dino.y === 140 && !gameOver) {
+    dino.vy = -12;
+  }
+
+  if (gameOver && e.code === "Enter") {
+    safeReload();
+  }
+});
+
+/* ---------------- OBSTACLES ---------------- */
+function spawnObstacle() {
+  obstacles.push({
+    x: canvas.width,
+    y: 150,
+    w: 20,
+    h: 30
+  });
 }
 
-for (let r = 0; r < 3; r++) {
-  for (let c = 0; c < 5; c++) {
-    bricks.push({
-      x: c * 90 + 30,
-      y: r * 30 + 30,
-      hit: false
-    });
+setInterval(() => {
+  if (!gameOver) spawnObstacle();
+}, 1400);
+
+/* ---------------- COLLISION ---------------- */
+function collide(a, b) {
+  return (
+    a.x < b.x + b.w &&
+    a.x + a.w > b.x &&
+    a.y < b.y + b.h &&
+    a.y + a.h > b.y
+  );
+}
+
+/* ---------------- SAFE RELOAD ---------------- */
+function safeReload() {
+  reloadCount++;
+  sessionStorage.setItem("dinoReloads", reloadCount);
+
+  if (reloadCount <= MAX_RELOADS) {
+    location.reload();
+  } else {
+    ctx.fillStyle = "red";
+    ctx.font = "16px Arial";
+    ctx.fillText(
+      "Reload limit reached. Refresh manually.",
+      160,
+      100
+    );
   }
 }
 
-document.addEventListener("mousemove", e => {
-  const rect = canvas.getBoundingClientRect();
-  paddle.x = e.clientX - rect.left - paddle.w / 2;
-});
-
+/* ---------------- GAME LOOP ---------------- */
 function loop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // move ball
-  ball.x += ball.dx;
-  ball.y += ball.dy;
+  // ground
+  ctx.fillStyle = "#555";
+  ctx.fillRect(0, 180, canvas.width, 4);
 
-  // walls
-  if (ball.x - ball.r < 0 || ball.x + ball.r > canvas.width) {
-    ball.dx *= -1;
-  }
-  if (ball.y - ball.r < 0) {
-    ball.dy *= -1;
-  }
+  /* Dino physics */
+  dino.vy += 0.6;
+  dino.y += dino.vy;
 
-  // paddle
-  if (
-    ball.y + ball.r >= 300 &&
-    ball.x > paddle.x &&
-    ball.x < paddle.x + paddle.w
-  ) {
-    ball.dy *= -1;
-    ball.y = 300 - ball.r;
+  if (dino.y > 140) {
+    dino.y = 140;
+    dino.vy = 0;
   }
 
-  // bottom → reset ball (NO reload)
-  if (ball.y - ball.r > canvas.height) {
-    resetBall();
-  }
-
-  // draw paddle
+  /* Draw dino */
   ctx.fillStyle = "#1a73e8";
-  ctx.fillRect(paddle.x, 300, paddle.w, 10);
+  ctx.fillRect(dino.x, dino.y, dino.w, dino.h);
 
-  // draw ball
-  ctx.beginPath();
-  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+  /* Obstacles */
   ctx.fillStyle = "#000";
-  ctx.fill();
+  obstacles.forEach(o => {
+    o.x -= 6;
+    ctx.fillRect(o.x, o.y, o.w, o.h);
 
-  // bricks
-  bricks.forEach(b => {
-    if (!b.hit) {
-      ctx.fillRect(b.x, b.y, 70, 20);
-      if (
-        ball.x > b.x &&
-        ball.x < b.x + 70 &&
-        ball.y > b.y &&
-        ball.y < b.y + 20
-      ) {
-        b.hit = true;
-        ball.dy *= -1;
-      }
+    if (collide(dino, o)) {
+      gameOver = true;
     }
   });
+
+  obstacles = obstacles.filter(o => o.x + o.w > 0);
+
+  /* Score */
+  score++;
+  ctx.fillStyle = "#000";
+  ctx.font = "14px Arial";
+  ctx.fillText("Score: " + score, 10, 20);
+
+  if (gameOver) {
+    ctx.fillStyle = "red";
+    ctx.font = "20px Arial";
+    ctx.fillText("Game Over", 240, 90);
+    ctx.font = "14px Arial";
+    ctx.fillText("Press ENTER to restart", 220, 120);
+    return;
+  }
 
   requestAnimationFrame(loop);
 }
