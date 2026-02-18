@@ -1,15 +1,15 @@
-// ===== CANVAS =====
+// ================= CANVAS =================
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 canvas.width = 600;
 canvas.height = 200;
 
-/* ================= FAILSAFE RELOAD LIMIT ================= */
+// ================= FAILSAFE RELOAD LIMIT =================
 const MAX_RELOADS = 3;
 let reloadCount = Number(sessionStorage.getItem("dinoReloads")) || 0;
 
-/* ================= AUTH CHECK ================= */
+// ================= AUTH CHECK =================
 if (!localStorage.getItem("crg9x_current_user")) {
   ctx.font = "18px Arial";
   ctx.fillStyle = "#000";
@@ -17,7 +17,32 @@ if (!localStorage.getItem("crg9x_current_user")) {
   throw new Error("Not logged in");
 }
 
-/* ================= GAME STATE ================= */
+// ================= SOUND (NO FILES) =================
+let audioCtx;
+
+function playSound(freq, duration, type = "square") {
+  if (!audioCtx) audioCtx = new AudioContext();
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = type;
+  osc.frequency.value = freq;
+
+  gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(
+    0.001,
+    audioCtx.currentTime + duration
+  );
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+
+// ================= GAME STATE =================
 const GROUND_Y = 140;
 
 let dino = {
@@ -32,7 +57,7 @@ let obstacles = [];
 let score = 0;
 let gameOver = false;
 
-/* ================= INPUT ================= */
+// ================= INPUT =================
 document.addEventListener("keydown", e => {
   if (
     (e.code === "Space" || e.code === "ArrowUp") &&
@@ -40,6 +65,7 @@ document.addEventListener("keydown", e => {
     !gameOver
   ) {
     dino.vy = -12;
+    playSound(650, 0.15); // jump sound
   }
 
   if (gameOver && e.code === "Enter") {
@@ -47,7 +73,7 @@ document.addEventListener("keydown", e => {
   }
 });
 
-/* ================= OBSTACLES ================= */
+// ================= OBSTACLES =================
 function spawnObstacle() {
   obstacles.push({
     x: canvas.width,
@@ -57,11 +83,11 @@ function spawnObstacle() {
   });
 }
 
-const obstacleInterval = setInterval(() => {
+setInterval(() => {
   if (!gameOver) spawnObstacle();
 }, 1400);
 
-/* ================= COLLISION ================= */
+// ================= COLLISION =================
 function collide(a, b) {
   return (
     a.x < b.x + b.w &&
@@ -71,7 +97,7 @@ function collide(a, b) {
   );
 }
 
-/* ================= SAFE RELOAD ================= */
+// ================= SAFE RELOAD =================
 function safeReload() {
   reloadCount++;
   sessionStorage.setItem("dinoReloads", reloadCount);
@@ -89,7 +115,7 @@ function safeReload() {
   }
 }
 
-/* ================= GAME LOOP ================= */
+// ================= GAME LOOP =================
 function loop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -106,7 +132,7 @@ function loop() {
     dino.vy = 0;
   }
 
-  // Draw Dino
+  // Dino
   ctx.fillStyle = "#1a73e8";
   ctx.fillRect(dino.x, dino.y, dino.w, dino.h);
 
@@ -118,6 +144,7 @@ function loop() {
 
     if (!gameOver && collide(dino, o)) {
       gameOver = true;
+      playSound(120, 0.4, "sawtooth"); // hit sound
     }
   });
 
@@ -129,7 +156,7 @@ function loop() {
   ctx.font = "14px Arial";
   ctx.fillText("Score: " + score, 10, 20);
 
-  // Game Over Screen
+  // Game Over
   if (gameOver) {
     ctx.fillStyle = "red";
     ctx.font = "20px Arial";
